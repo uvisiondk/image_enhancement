@@ -104,42 +104,30 @@ def stretching(img):
 ##
 def HSVStretching(sceneRadiance):
     sceneRadiance = np.uint8(sceneRadiance)
-    height = len(sceneRadiance)
-    width = len(sceneRadiance[0])
     img_hsv = rgb2hsv(sceneRadiance)
     h, s, v = cv2.split(img_hsv)
-    img_s_stretching = global_stretching(s, height, width)
-    img_v_stretching = global_stretching(v, height, width)
-
-    labArray = np.zeros((height, width, 3), "float64")
+    
+    img_s_stretching = global_stretching(s)
+    img_v_stretching = global_stretching(v)
+    
+    labArray = np.zeros_like(img_hsv, dtype="float64")
     labArray[:, :, 0] = h
     labArray[:, :, 1] = img_s_stretching
     labArray[:, :, 2] = img_v_stretching
     img_rgb = hsv2rgb(labArray) * 255
-
-    # img_rgb = np.clip(img_rgb, 0, 255)
-
+    
     return img_rgb
 
 
 ##
 ## global_Stretching.py
 ##
-def global_stretching(img_L, height, width):
+def global_stretching(img_L):
     I_min = np.min(img_L)
     I_max = np.max(img_L)
-    I_mean = np.mean(img_L)
-
-    # print('I_min',I_min)
-    # print('I_max',I_max)
-    # print('I_max',I_mean)
-
-    array_Global_histogram_stretching_L = np.zeros((height, width))
-    for i in range(0, height):
-        for j in range(0, width):
-            p_out = (img_L[i][j] - I_min) * ((1) / (I_max - I_min))
-            array_Global_histogram_stretching_L[i][j] = p_out
-
+    
+    array_Global_histogram_stretching_L = (img_L - I_min) * ((1) / (I_max - I_min))
+    
     return array_Global_histogram_stretching_L
 
 
@@ -176,7 +164,7 @@ if __name__ == '__main__':
     startTimeTotal = datetime.datetime.now()
 
     # Get dataset
-    folder = "/home/aw/Code/UVision/image_processing/image_enhancement/Dataset"
+    folder = "./Dataset"
     path = folder + "/input"
     files = os.listdir(path)
     files = [file for file in files if file != '.DS_Store']  # Filter out '.DS_Store' files
