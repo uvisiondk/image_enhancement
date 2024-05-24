@@ -36,10 +36,8 @@
 
 ## Easy Usage
 1. Complete the running environment configuration;
-2. Put the inputs images to corresponding folders :
-  - (create 'InputImages' and 'OutputImages' folders, then put raw images to 'InputImages' folder);
-3. Python main.py;
-4. Find the enhanced/restored images in "OutputImages" folder.
+2. Put the unzip scans into the Dataset folder
+3. From the base directory run: python "Underwater Image Enhancement/UCM/main.py"
 
 
 ## Citation

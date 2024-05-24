@@ -6,6 +6,7 @@ import xlwt
 import datetime
 from skimage.color import rgb2hsv, hsv2rgb
 from multiprocessing import Pool
+import traceback
 
 ###
 ### color_equalisation.py
@@ -145,41 +146,66 @@ def sceneRadianceRGB(sceneRadiance):
 ##
 ## Main
 ##
-def process_file(file):
-    filepath = path + "/" + file
-    prefix = file.split('.')[0]
-    if os.path.isfile(filepath):
-        start_time = datetime.datetime.now()
-        img = cv2.imread(folder + '/input/' + file)
-        sceneRadiance = RGB_equalisation(img)
-        sceneRadiance = stretching(sceneRadiance)
-        sceneRadiance = HSVStretching(sceneRadiance)
-        sceneRadiance = sceneRadianceRGB(sceneRadiance)
-        cv2.imwrite(folder + '/output/' + prefix + '_UCM.jpg', sceneRadiance)
-        end_time = datetime.datetime.now()
-        print('********    File: ', file, ' Time: ', end_time - start_time, '    ********')
+def process_file(input_path, output_path, file):
+    try:
+        filepath = input_path + "/" + file
+        prefix = file.split('.')[0]
+        
+        if os.path.isfile(filepath):
+            start_time = datetime.datetime.now()
+            img = cv2.imread(input_path + '/' + file)
+            sceneRadiance = RGB_equalisation(img)
+            sceneRadiance = stretching(sceneRadiance)
+            sceneRadiance = HSVStretching(sceneRadiance)
+            sceneRadiance = sceneRadianceRGB(sceneRadiance)
+            cv2.imwrite(output_path + '/' + prefix + '_UCM.jpg', sceneRadiance)
+            end_time = datetime.datetime.now()
+            print('******** File: ', file, ' Time: ', end_time - start_time, ' ********')
+    except Exception as e:
+        print(f"Error processing file: {file}")
+        print(f"Error message: {str(e)}")
+        print(traceback.format_exc())
 
 
 if __name__ == '__main__':
     startTimeTotal = datetime.datetime.now()
 
     # Get dataset
-    folder = "./Dataset"
-    path = folder + "/input"
-    files = os.listdir(path)
-    files = [file for file in files if file != '.DS_Store']  # Filter out '.DS_Store' files
-    files = natsort.natsorted(files)
+    input_base_path = "./Dataset"
 
-    # Create a pool of worker processes
-    num_processes = os.cpu_count()  # Use the number of CPU cores available
-    pool = Pool(processes=num_processes)
+    # Process images from each folder
+    for subfolder in os.listdir(input_base_path):
+        if os.path.isdir(os.path.join(input_base_path, subfolder)):
+            left_path = os.path.join(input_base_path, subfolder, "images/left")
+            right_path = os.path.join(input_base_path, subfolder, "images/right")
+            left_output_path = os.path.join(input_base_path, subfolder, "images_UCM/left")
+            right_output_path = os.path.join(input_base_path, subfolder, "images_UCM/right")
 
-    # Process files in parallel
-    pool.map(process_file, files)
+            # Create output directories if they don't exist
+            os.makedirs(left_output_path, exist_ok=True)
+            os.makedirs(right_output_path, exist_ok=True)
 
-    # Close the pool and wait for all processes to finish
-    pool.close()
-    pool.join()
+            left_files = os.listdir(left_path)
+            left_files = [file for file in left_files if file != '.DS_Store']  # Filter out '.DS_Store' files
+            left_files = natsort.natsorted(left_files)
+
+            right_files = os.listdir(right_path)
+            right_files = [file for file in right_files if file != '.DS_Store']  # Filter out '.DS_Store' files
+            right_files = natsort.natsorted(right_files)
+
+            # Create a pool of worker processes
+            num_processes = os.cpu_count()  # Use the number of CPU cores available
+            pool = Pool(processes=num_processes)
+
+            # Process left files in parallel
+            pool.starmap(process_file, [(left_path, left_output_path, file) for file in left_files])
+
+            # Process right files in parallel
+            pool.starmap(process_file, [(right_path, right_output_path, file) for file in right_files])
+
+            # Close the pool and wait for all processes to finish
+            pool.close()
+            pool.join()
 
     endTimeTotal = datetime.datetime.now()
     time = endTimeTotal - startTimeTotal
