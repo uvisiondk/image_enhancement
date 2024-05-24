@@ -42,28 +42,22 @@ def RGB_equalisation(img):
 ##
 ## global_histogram_stretching.py
 ##
-def histogram_r(r_array,height, width):
+def histogram_r(r_array, height, width):
     length = height * width
-    R_rray = []
-    for i in range(height):
-        for j in range(width):
-            R_rray.append(r_array[i][j])
+    R_rray = r_array.flatten()
     R_rray.sort()
     I_min = int(R_rray[int(length / 500)])
     I_max = int(R_rray[-int(length / 500)])
-    array_Global_histogram_stretching = np.zeros((height, width))
-    for i in range(0, height):
-        for j in range(0, width):
-            if r_array[i][j] < I_min:
-                # p_out = r_array[i][j]
-                array_Global_histogram_stretching[i][j] = I_min
-            elif (r_array[i][j] > I_max):
-                p_out = r_array[i][j]
-                array_Global_histogram_stretching[i][j] = 255
-            else:
-                p_out = int((r_array[i][j] - I_min) * ((255 - I_min) / (I_max - I_min)))+ I_min
-                array_Global_histogram_stretching[i][j] = p_out
-    return (array_Global_histogram_stretching)
+    
+    array_Global_histogram_stretching = np.zeros_like(r_array)
+    mask1 = r_array < I_min
+    mask2 = r_array > I_max
+    array_Global_histogram_stretching[mask1] = I_min
+    array_Global_histogram_stretching[mask2] = 255
+    mask3 = ~(mask1 | mask2)
+    array_Global_histogram_stretching[mask3] = ((r_array[mask3] - I_min) * ((255 - I_min) / (I_max - I_min))) + I_min
+    
+    return array_Global_histogram_stretching
 
 def histogram_g(r_array,height, width):
     length = height * width
