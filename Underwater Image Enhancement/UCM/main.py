@@ -5,18 +5,7 @@ import natsort
 import xlwt
 import datetime
 from skimage.color import rgb2hsv, hsv2rgb
-
-np.seterr(over="ignore")
-if __name__ == "__main__":
-    pass
-
-# Get dataset
-folder = "/home/aw/Code/UVision/image_processing/image_enhancement/Dataset"
-path = folder + "/input"
-files = os.listdir(path)
-files = [file for file in files if file != ".DS_Store"]  # Filter out '.DS_Store' files
-files = natsort.natsorted(files)
-
+from multiprocessing import Pool
 
 ###
 ### color_equalisation.py
@@ -168,24 +157,42 @@ def sceneRadianceRGB(sceneRadiance):
 ##
 ## Main
 ##
-startTimeTotal = datetime.datetime.now()
-for i in range(len(files)):
-    file = files[i]
+def process_file(file):
     filepath = path + "/" + file
-    prefix = file.split(".")[0]
+    prefix = file.split('.')[0]
     if os.path.isfile(filepath):
         start_time = datetime.datetime.now()
-        img = cv2.imread(folder + "/input/" + file)
+        img = cv2.imread(folder + '/input/' + file)
         sceneRadiance = RGB_equalisation(img)
         sceneRadiance = stretching(sceneRadiance)
         sceneRadiance = HSVStretching(sceneRadiance)
         sceneRadiance = sceneRadianceRGB(sceneRadiance)
-        cv2.imwrite(folder + "/output/" + prefix + "_UCM.jpg", sceneRadiance)
+        cv2.imwrite(folder + '/output/' + prefix + '_UCM.jpg', sceneRadiance)
         end_time = datetime.datetime.now()
-        print(
-            "********    File: ", file, " Time: ", end_time - start_time, "    ********"
-        )
+        print('********    File: ', file, ' Time: ', end_time - start_time, '    ********')
 
-endTimeTotal = datetime.datetime.now()
-time = endTimeTotal - startTimeTotal
-print("time", time)
+
+if __name__ == '__main__':
+    startTimeTotal = datetime.datetime.now()
+
+    # Get dataset
+    folder = "/home/aw/Code/UVision/image_processing/image_enhancement/Dataset"
+    path = folder + "/input"
+    files = os.listdir(path)
+    files = [file for file in files if file != '.DS_Store']  # Filter out '.DS_Store' files
+    files = natsort.natsorted(files)
+
+    # Create a pool of worker processes
+    num_processes = os.cpu_count()  # Use the number of CPU cores available
+    pool = Pool(processes=num_processes)
+
+    # Process files in parallel
+    pool.map(process_file, files)
+
+    # Close the pool and wait for all processes to finish
+    pool.close()
+    pool.join()
+
+    endTimeTotal = datetime.datetime.now()
+    time = endTimeTotal - startTimeTotal
+    print('time', time)
