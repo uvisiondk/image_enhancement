@@ -30,16 +30,9 @@
 
 
 ## Install
-Here is the list of libraries you need to install to execute the code:
-- python = 3.6
-- cv2
-- numpy
-- scipy
-- matplotlib
-- scikit-image
-- natsort
-- math
-- datetime
+1. Create a new conda environment: ```conda create --name image_enh python=3.6```
+1. Activate the newly created environment: ```conda activate image_enh```
+1. Install the packages listed in the *requirements.txt* file using pip: ```pip install -r requirements.txt```
 
 ## Easy Usage
 1. Complete the running environment configuration;
